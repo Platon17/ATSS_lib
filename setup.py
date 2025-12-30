@@ -1,20 +1,14 @@
-``` bash
-pip install .
-```
-#CODE
-``` python
-from atss import ATSS, atss_conf
+from setuptools import setup, find_packages
 
-# Глобальная настройка (опционально)
-atss_conf.wl = "my_words.txt"
-
-# Создаем анализатор (вместо 'in' используем 'input_file')
-a = ATSS(input_file="letter.txt")
-
-# Смотрим результат
-print(a.ex_words)
-```
-#CLI
-``` bash
-atss -in "letter.txt" -wl "russian_words.txt"
-```
+setup(
+    name="atss",
+    version="1.0.0",
+    packages=find_packages(),
+    entry_points={
+        'console_scripts': [
+            'atss=atss.cli:main',
+        ],
+    },
+    author="YourName",
+    description="Library for analyzing acrostic texts for hidden messages",
+)
