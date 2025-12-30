@@ -1,4 +1,3 @@
-# ATSS_lib
 ``` bash
 pip install .
 ```
