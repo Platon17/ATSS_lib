@@ -9,6 +9,6 @@ setup(
             'atss=atss.cli:main',
         ],
     },
-    author="YourName",
+    author="platon17",
     description="Library for analyzing acrostic texts for hidden messages",
 )
