@@ -2,42 +2,116 @@
 import argparse
 import os
 import sys
+import json
 from .core import ATSS, atss_conf
+
+def process_file(filepath, args):
+    """
+    Запускает анализ для одного файла и возвращает экземпляр ATSS.
+    """
+    if not os.path.exists(filepath):
+        print(f"[ATSS ERROR] Файл '{filepath}' не найден.", file=sys.stderr)
+        return None
+
+    try:
+        app = ATSS(input_file=filepath, wordlist=args.wordlist, lang=args.lang)
+        return app
+    except Exception as e:
+        print(f"[ATSS ERROR] Ошибка при обработке '{filepath}': {e}", file=sys.stderr)
+        return None
+
+def print_text_report(filepath, app):
+    """Вывод результатов в текстовом формате в консоль"""
+    print(f"\n=== Файл: {filepath} ===")
+    
+    if not app or not app.ex_words:
+        print("  -> Скрытых сообщений не обнаружено.")
+    else:
+        # Сортируем результаты по score
+        sorted_items = sorted(app.ex_words.items(), key=lambda x: x[1]['score'], reverse=True)
+        
+        print(f"  {'МЕТОД / ТРАНСФОРМАЦИЯ':<40} | {'SCORE':<6} | {'ТЕКСТ'}")
+        print("  " + "-" * 88)
+        
+        for method_key, data in sorted_items:
+            text = data['text']
+            score = data['score']
+            display_text = (text[:40] + '...') if len(text) > 40 else text
+            print(f"  {method_key:<40} | {score:<6} | {display_text}")
+    print("-" * 90)
 
 def main():
     parser = argparse.ArgumentParser(description="ATSS: AcroText Steganography Solver")
     
-    parser.add_argument("-in", "--input", dest="input_file", required=True,
-                        help="Путь к входному файлу (.txt)")
+    # Группа: либо файл, либо директория
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("-in", "--input", dest="input_file",
+                        help="Путь к одному входному файлу (.txt)")
+    group.add_argument("-d", "--directory", dest="directory",
+                        help="Путь к директории с файлами для пакетного анализа")
+
     parser.add_argument("-wl", "--wordlist", dest="wordlist", default=None,
                         help="Путь к файлу словаря")
-    parser.add_argument("--lang", dest="lang", default="ru",
-                        help="Язык (влияет только на дефолтные настройки)")
+    parser.add_argument("--lang", dest="lang", default="ru", choices=["ru", "en"],
+                        help="Язык анализа: 'ru' или 'en' (default: ru)")
+    parser.add_argument("--json", dest="json_output", action="store_true",
+                        help="Вывести результат в формате JSON")
     
     args = parser.parse_args()
 
-    # Настройка
-    atss_conf.lang = args.lang
-    wl_path = args.wordlist if args.wordlist else atss_conf.wl
+    # Собираем список файлов для обработки
+    files_to_process = []
 
-    if not os.path.exists(args.input_file):
-        print(f"[ATSS] Ошибка: Файл '{args.input_file}' не найден.")
-        sys.exit(1)
-
-    # Запуск анализатора
-    app = ATSS(input_file=args.input_file, wordlist=wl_path)
-
-    print(f"\n--- Результаты ATSS для: {args.input_file} ---")
+    if args.input_file:
+        files_to_process.append(args.input_file)
     
-    if not app.ex_words:
-        print("Скрытых сообщений не обнаружено (или словарь не подходит).")
-    else:
-        print(f"{'МЕТОД':<35} | {'ТЕКСТ'}")
-        print("-" * 80)
-        for method, text in app.ex_words.items():
-            display_text = (text[:60] + '...') if len(text) > 60 else text
-            print(f"{method:<35} | {display_text}")
-    print("-" * 80)
+    elif args.directory:
+        if not os.path.isdir(args.directory):
+            print(f"[ATSS] Ошибка: Директория '{args.directory}' не найдена.")
+            sys.exit(1)
+        
+        # Сканируем директорию (берем только .txt, чтобы не читать бинарники)
+        for root, dirs, files in os.walk(args.directory):
+            for file in files:
+                if file.endswith(".txt"):
+                    files_to_process.append(os.path.join(root, file))
+        
+        if not files_to_process:
+            print(f"[ATSS] В директории '{args.directory}' не найдено .txt файлов.")
+            sys.exit(0)
+
+    # Структура для накопления результатов (для JSON)
+    json_results = []
+
+    if not args.json_output:
+        print(f"--- ATSS Start | Lang: {args.lang} | Files: {len(files_to_process)} ---")
+
+    # Основной цикл обработки
+    for filepath in files_to_process:
+        app = process_file(filepath, args)
+        
+        if not app:
+            continue
+
+        if args.json_output:
+            # Формируем объект результата для JSON
+            file_result = {
+                "file": filepath,
+                "language": args.lang,
+                "found_messages": app.ex_words
+            }
+            json_results.append(file_result)
+        else:
+            # Выводим текст сразу по мере обработки
+            print_text_report(filepath, app)
+
+    # Финальный вывод JSON
+    if args.json_output:
+        # Если был передан один файл, выводим объект, если директория — список
+        if args.input_file:
+            print(json.dumps(json_results[0] if json_results else {}, ensure_ascii=False, indent=4))
+        else:
+            print(json.dumps(json_results, ensure_ascii=False, indent=4))
 
 if __name__ == "__main__":
     main()
