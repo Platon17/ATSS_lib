@@ -44,7 +44,7 @@ class ATSS:
             with open(path, 'r', encoding='utf-8') as f:
                 self.raw_text = f.read()
         else:
-            print(f"[ATSS WARN] Файл '{path}' не найден.")
+            print(f"[ATSS] Файл '{path}' не найден.")
 
     def _run_analysis(self):
         # Получаем "сырые" кандидаты от стратегий

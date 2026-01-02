@@ -10,14 +10,14 @@ def process_file(filepath, args):
     Запускает анализ для одного файла и возвращает экземпляр ATSS.
     """
     if not os.path.exists(filepath):
-        print(f"[ATSS ERROR] Файл '{filepath}' не найден.", file=sys.stderr)
+        print(f"[ATSS] Файл '{filepath}' не найден.", file=sys.stderr)
         return None
 
     try:
         app = ATSS(input_file=filepath, wordlist=args.wordlist, lang=args.lang)
         return app
     except Exception as e:
-        print(f"[ATSS ERROR] Ошибка при обработке '{filepath}': {e}", file=sys.stderr)
+        print(f"[ATSS] Ошибка при обработке '{filepath}': {e}", file=sys.stderr)
         return None
 
 def print_text_report(filepath, app):
