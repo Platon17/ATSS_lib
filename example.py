@@ -1,8 +1,3 @@
-# ATSS_lib
-AcroText Steganography Solution
-
-
-```python
 from atss import *
 
 atss_conf.defaults["ru"] = "ruwords.txt"
@@ -18,4 +13,3 @@ for w in words:
 """
 Example usage of this program, this code extracts the hidden nazi message.
 """
-```

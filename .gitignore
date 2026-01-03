@@ -1,5 +1,6 @@
 ruwords.txt
-/build
-/atss.egg-info
+build/
+atss.egg-info/
 enwords.txt
 build/lib/atss/cli.py
+__pycache__/

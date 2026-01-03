@@ -3,7 +3,57 @@ import argparse
 import os
 import sys
 import json
-from .core import ATSS, atss_conf
+# Assuming .core exists as per your snippet
+from .core import ATSS, atss_conf 
+
+def run_refactor(input_path, output_path):
+    """
+    Reads the input file, removes specific punctuation/symbols from the start 
+    of each line, and writes to the output file.
+    """
+    if not os.path.exists(input_path):
+        print(f"[ATSS] Ошибка: Файл '{input_path}' не найден.", file=sys.stderr)
+        return
+
+    # Symbols to strip from the left side. 
+    # Includes: . : - , ? ! — (em-dash) ; (semicolon) and spaces/tabs
+    chars_to_strip = ".:-,?!—; \t"
+
+    try:
+        with open(input_path, 'r', encoding='utf-8') as f_in:
+            lines = f_in.readlines()
+
+        cleaned_lines = []
+        count = 0
+        for line in lines:
+            # lstrip removes any combination of the characters in 'chars_to_strip'
+            # from the beginning of the string until it hits a character not in the set.
+            original_content = line.rstrip('\n')
+            if not original_content:
+                cleaned_lines.append(line) # Keep empty lines as is
+                continue
+                
+            new_content = original_content.lstrip(chars_to_strip)
+            
+            # Re-attach the newline character if it existed
+            if line.endswith('\n'):
+                cleaned_lines.append(new_content + '\n')
+            else:
+                cleaned_lines.append(new_content)
+            
+            if len(new_content) != len(original_content):
+                count += 1
+
+        with open(output_path, 'w', encoding='utf-8') as f_out:
+            f_out.writelines(cleaned_lines)
+            
+        print(f"[ATSS] Refactor complete.")
+        print(f"       Processed lines: {len(lines)}")
+        print(f"       Modified lines:  {count}")
+        print(f"       Saved to:        {output_path}")
+
+    except Exception as e:
+        print(f"[ATSS] Ошибка при рефакторинге '{input_path}': {e}", file=sys.stderr)
 
 def process_file(filepath, args):
     if not os.path.exists(filepath):
@@ -11,7 +61,6 @@ def process_file(filepath, args):
         return None
 
     try:
-        # Передаем новый аргумент min_length
         app = ATSS(
             input_file=filepath, 
             wordlist=args.wordlist, 
@@ -24,7 +73,6 @@ def process_file(filepath, args):
         return None
 
 def print_text_report(filepath, app):
-    # (Без изменений)
     print(f"\n=== Файл: {filepath} ===")
     
     if not app or not app.ex_words:
@@ -44,27 +92,48 @@ def print_text_report(filepath, app):
 def main():
     parser = argparse.ArgumentParser(description="ATSS: AcroText Steganography Solver")
     
+    # --- Mutually Exclusive Group (Main Modes) ---
     group = parser.add_mutually_exclusive_group(required=True)
+    
+    # Mode 1: Analyze Single File
     group.add_argument("-in", "--input", dest="input_file",
-                        help="Путь к одному входному файлу (.txt)")
+                        help="Путь к одному входному файлу (.txt) для анализа")
+    
+    # Mode 2: Analyze Directory
     group.add_argument("-d", "--directory", dest="directory",
                         help="Путь к директории с файлами для пакетного анализа")
+    
+    # Mode 3: Refactor File (NEW)
+    group.add_argument("--refactor", dest="refactor_file",
+                        help="Путь к файлу для очистки пунктуации в начале строк")
+
+    # --- Common / Optional Arguments ---
+    parser.add_argument("-o", "--output", dest="output_file", default=None,
+                        help="Путь к выходному файлу (обязателен для --refactor)")
 
     parser.add_argument("-wl", "--wordlist", dest="wordlist", default=None,
                         help="Путь к файлу словаря")
     parser.add_argument("--lang", dest="lang", default="ru", choices=["ru", "en"],
                         help="Язык анализа: 'ru' или 'en' (default: ru)")
     
-    # --- НОВЫЙ АРГУМЕНТ ---
     parser.add_argument("-ml", "--min-length", dest="min_length", type=int, default=5,
                         help="Минимальная длина слова для валидации (default: 5)")
-    # ----------------------
 
     parser.add_argument("--json", dest="json_output", action="store_true",
-                        help="Вывести результат в формате JSON")
+                        help="Вывести результат анализа в формате JSON")
     
     args = parser.parse_args()
 
+    # --- LOGIC BRANCH: REFACTORING ---
+    if args.refactor_file:
+        if not args.output_file:
+            print("[ATSS] Ошибка: Для режима --refactor необходимо указать выходной файл через флаг -o", file=sys.stderr)
+            sys.exit(1)
+        
+        run_refactor(args.refactor_file, args.output_file)
+        sys.exit(0) # Exit after refactoring
+
+    # --- LOGIC BRANCH: ANALYSIS ---
     files_to_process = []
     if args.input_file:
         files_to_process.append(args.input_file)
@@ -83,7 +152,6 @@ def main():
 
     json_results = []
     if not args.json_output:
-        # Добавил min_length в лог старта для наглядности
         print(f"--- ATSS Start | Lang: {args.lang} | MinLen: {args.min_length} | Files: {len(files_to_process)} ---")
 
     for filepath in files_to_process:
