@@ -6,30 +6,31 @@ import json
 from .core import ATSS, atss_conf
 
 def process_file(filepath, args):
-    """
-    Запускает анализ для одного файла и возвращает экземпляр ATSS.
-    """
     if not os.path.exists(filepath):
         print(f"[ATSS] Файл '{filepath}' не найден.", file=sys.stderr)
         return None
 
     try:
-        app = ATSS(input_file=filepath, wordlist=args.wordlist, lang=args.lang)
+        # Передаем новый аргумент min_length
+        app = ATSS(
+            input_file=filepath, 
+            wordlist=args.wordlist, 
+            lang=args.lang,
+            min_length=args.min_length
+        )
         return app
     except Exception as e:
         print(f"[ATSS] Ошибка при обработке '{filepath}': {e}", file=sys.stderr)
         return None
 
 def print_text_report(filepath, app):
-    """Вывод результатов в текстовом формате в консоль"""
+    # (Без изменений)
     print(f"\n=== Файл: {filepath} ===")
     
     if not app or not app.ex_words:
         print("  -> Скрытых сообщений не обнаружено.")
     else:
-        # Сортируем результаты по score
         sorted_items = sorted(app.ex_words.items(), key=lambda x: x[1]['score'], reverse=True)
-        
         print(f"  {'МЕТОД / ТРАНСФОРМАЦИЯ':<40} | {'SCORE':<6} | {'ТЕКСТ'}")
         print("  " + "-" * 88)
         
@@ -43,7 +44,6 @@ def print_text_report(filepath, app):
 def main():
     parser = argparse.ArgumentParser(description="ATSS: AcroText Steganography Solver")
     
-    # Группа: либо файл, либо директория
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("-in", "--input", dest="input_file",
                         help="Путь к одному входному файлу (.txt)")
@@ -54,23 +54,24 @@ def main():
                         help="Путь к файлу словаря")
     parser.add_argument("--lang", dest="lang", default="ru", choices=["ru", "en"],
                         help="Язык анализа: 'ru' или 'en' (default: ru)")
+    
+    # --- НОВЫЙ АРГУМЕНТ ---
+    parser.add_argument("-ml", "--min-length", dest="min_length", type=int, default=5,
+                        help="Минимальная длина слова для валидации (default: 5)")
+    # ----------------------
+
     parser.add_argument("--json", dest="json_output", action="store_true",
                         help="Вывести результат в формате JSON")
     
     args = parser.parse_args()
 
-    # Собираем список файлов для обработки
     files_to_process = []
-
     if args.input_file:
         files_to_process.append(args.input_file)
-    
     elif args.directory:
         if not os.path.isdir(args.directory):
             print(f"[ATSS] Ошибка: Директория '{args.directory}' не найдена.")
             sys.exit(1)
-        
-        # Сканируем директорию (берем только .txt, чтобы не читать бинарники)
         for root, dirs, files in os.walk(args.directory):
             for file in files:
                 if file.endswith(".txt"):
@@ -80,34 +81,28 @@ def main():
             print(f"[ATSS] В директории '{args.directory}' не найдено .txt файлов.")
             sys.exit(0)
 
-    # Структура для накопления результатов (для JSON)
     json_results = []
-
     if not args.json_output:
-        print(f"--- ATSS Start | Lang: {args.lang} | Files: {len(files_to_process)} ---")
+        # Добавил min_length в лог старта для наглядности
+        print(f"--- ATSS Start | Lang: {args.lang} | MinLen: {args.min_length} | Files: {len(files_to_process)} ---")
 
-    # Основной цикл обработки
     for filepath in files_to_process:
         app = process_file(filepath, args)
-        
         if not app:
             continue
 
         if args.json_output:
-            # Формируем объект результата для JSON
             file_result = {
                 "file": filepath,
                 "language": args.lang,
+                "min_length": args.min_length,
                 "found_messages": app.ex_words
             }
             json_results.append(file_result)
         else:
-            # Выводим текст сразу по мере обработки
             print_text_report(filepath, app)
 
-    # Финальный вывод JSON
     if args.json_output:
-        # Если был передан один файл, выводим объект, если директория — список
         if args.input_file:
             print(json.dumps(json_results[0] if json_results else {}, ensure_ascii=False, indent=4))
         else:

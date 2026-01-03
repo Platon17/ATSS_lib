@@ -2,52 +2,64 @@
 import os
 
 class DictionaryChecker:
-    def __init__(self, dictionary_path=None, lang="ru"):
+    def __init__(self, dictionary_path=None, lang="ru", min_length=5):
         self.words = set()
         self.lang = lang
-        # Если путь не передан, пытаемся загрузить дефолт для языка
+        self.min_length = min_length  # Сохраняем параметр
+        
+        # Загружаем словарь с учетом фильтра длины
         self.load_dictionary(dictionary_path)
 
     def load_dictionary(self, path):
-        """Загружает словарь. Если файла нет, создает базовый набор в зависимости от языка."""
+        """Загружает словарь. Игнорирует слова короче self.min_length."""
+        loaded_from_file = False
+        
         if path and os.path.exists(path):
             try:
                 with open(path, 'r', encoding='utf-8') as f:
                     for line in f:
                         word = line.strip().lower()
-                        if len(word) > 1: 
+                        # ФИЛЬТР: только слова >= min_length
+                        if len(word) >= self.min_length: 
                             self.words.add(word)
-                return
+                loaded_from_file = True
             except Exception as e:
                 print(f"[ATSS ERROR] Ошибка чтения словаря: {e}")
 
-        # --- FALLBACK (Встроенные словари) ---
-        if self.lang == "en":
-            self.words = {
-                "the", "be", "to", "of", "and", "a", "in", "that", "have", "i",
-                "it", "for", "not", "on", "with", "he", "as", "you", "do", "at",
-                "this", "but", "his", "by", "from", "bird", "cage", "fly", "sky",
-                "freedom", "eagle", "fate", "garden", "secret", "code", "hidden",
-                "message", "steganography", "agent", "spy", "system", "data",
-                "tree", "water", "river", "moon", "sun", "stars", "night", "day",
-                "help", "sos", "save", "me", "danger", "look", "first", "last"
-            }
-        else:
-            # Дефолтный русский
-            self.words = {
-                "птичка", "клетке", "птичку", "воле", "саду", "орёл", "судьбе",
-                "в", "на", "с", "по", "из", 
-                "лит", "хабаровск", "стеганография",
-                "лицей", "храм", "науки", "добра", "интеллект",
-                "технологий", "будущего", "светлые", "умы",
-                "базы", "данных", "код", "охрана", "вирусов",
-                "системы", "каждый", "бит", "сокрытие", "тайны",
-                "единый", "глубоко", "алгоритмы", "научились",
-                "агент", "шпион",
-                "лес", "шумел", "ивы", "вода", "трава",
-                "ворона", "будет", "три", "пруду",
-                "золотистые", "привет"
-            }
+        # Если файл не загружен или пуст, используем FALLBACK (Встроенные словари)
+        # но также применяем фильтр длины!
+        if not loaded_from_file or not self.words:
+            raw_words = set()
+            if self.lang == "en":
+                raw_words = {
+                    "the", "be", "to", "of", "and", "a", "in", "that", "have", "i",
+                    "it", "for", "not", "on", "with", "he", "as", "you", "do", "at",
+                    "this", "but", "his", "by", "from", "bird", "cage", "fly", "sky",
+                    "freedom", "eagle", "fate", "garden", "secret", "code", "hidden",
+                    "message", "steganography", "agent", "spy", "system", "data",
+                    "tree", "water", "river", "moon", "sun", "stars", "night", "day",
+                    "help", "sos", "save", "me", "danger", "look", "first", "last"
+                }
+            else:
+                raw_words = {
+                    "птичка", "клетке", "птичку", "воле", "саду", "орёл", "судьбе",
+                    "в", "на", "с", "по", "из", 
+                    "лит", "хабаровск", "стеганография",
+                    "лицей", "храм", "науки", "добра", "интеллект",
+                    "технологий", "будущего", "светлые", "умы",
+                    "базы", "данных", "код", "охрана", "вирусов",
+                    "системы", "каждый", "бит", "сокрытие", "тайны",
+                    "единый", "глубоко", "алгоритмы", "научились",
+                    "агент", "шпион",
+                    "лес", "шумел", "ивы", "вода", "трава",
+                    "ворона", "будет", "три", "пруду",
+                    "золотистые", "привет"
+                }
+            
+            # Применяем фильтр к встроенному словарю
+            for w in raw_words:
+                if len(w) >= self.min_length:
+                    self.words.add(w)
 
     def calculate_score_and_segment(self, text):
         """
@@ -68,9 +80,12 @@ class DictionaryChecker:
         
         while i < n:
             found_word = None
-            # Ограничиваем длину слова для поиска (оптимизация)
             max_len = min(25, n - i)
             
+            # Ищем слово, начиная с максимально возможной длины до min_length
+            # Если слово короче min_length, его нет в self.words, поэтому цикл можно
+            # прервать раньше, но для надежности оставляем range до 1, 
+            # так как проверка 'in self.words' сама все отфильтрует.
             for length in range(max_len, 1, -1):
                 sub = clean_text[i : i + length]
                 if sub in self.words:

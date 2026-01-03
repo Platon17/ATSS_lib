@@ -8,27 +8,31 @@ class Config:
     def __init__(self):
         self.defaults = {
             "ru": "russian_words.txt",
-            "en": "english_words.txt"
+            "en": "english_words.txt",
+            "min_length": 5  # Значение по умолчанию
         }
 
 atss_conf = Config()
 
 class ATSS:
-    def __init__(self, input_file=None, text=None, wordlist=None, lang="ru", threshold=0.3):
+    def __init__(self, input_file=None, text=None, wordlist=None, lang="ru", threshold=0.3, min_length=None):
         self.lang = lang
         
+        # Определяем минимальную длину (приоритет: аргумент -> конфиг -> хардкод 5)
+        self.min_length = min_length if min_length is not None else atss_conf.defaults.get("min_length", 5)
+
         # Выбор словаря
         if wordlist:
             wl_path = wordlist
         else:
             wl_path = atss_conf.defaults.get(lang, "russian_words.txt")
         
-        self.checker = DictionaryChecker(dictionary_path=wl_path, lang=self.lang)
+        # Передаем min_length в чекер
+        self.checker = DictionaryChecker(dictionary_path=wl_path, lang=self.lang, min_length=self.min_length)
         self.analyzer = StegoAnalyzer()
         self.threshold = threshold
         
         self.raw_text = ""
-        # ex_words будет словарем вида: { "Method Name": {data...} }
         self.ex_words = {} 
 
         if input_file:
@@ -47,10 +51,8 @@ class ATSS:
             print(f"[ATSS] Файл '{path}' не найден.")
 
     def _run_analysis(self):
-        # Получаем "сырые" кандидаты от стратегий
         candidates = self.analyzer.analyze(self.raw_text)
         
-        # Список трансформаций: (Название, Функция)
         transforms = [
             ("Plain", lambda s: s),
             ("ROT13", lambda s: codecs.encode(s, 'rot_13'))
@@ -58,13 +60,9 @@ class ATSS:
 
         for method, raw_string in candidates.items():
             for t_name, t_func in transforms:
-                # Применяем трансформацию (Plain или ROT13)
                 processed_string = t_func(raw_string)
-                
-                # Проверяем по словарю
                 score, segmented = self.checker.calculate_score_and_segment(processed_string)
                 
-                # Формируем уникальный ключ метода, например: "Первые буквы [ROT13]"
                 key_method = method if t_name == "Plain" else f"{method} [{t_name}]"
 
                 if score > self.threshold:
