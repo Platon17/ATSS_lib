@@ -24,10 +24,9 @@ class DictionaryChecker:
                             self.words.add(word)
                 loaded_from_file = True
             except Exception as e:
-                print(f"[ATSS ERROR] Ошибка чтения словаря: {e}")
+                print(f"[ATSS] Ошибка чтения словаря: {e}")
 
-        # Если файл не загружен или пуст, используем FALLBACK (Встроенные словари)
-        # но также применяем фильтр длины!
+        #встроенные словари
         if not loaded_from_file or not self.words:
             raw_words = set()
             if self.lang == "en":
@@ -56,15 +55,15 @@ class DictionaryChecker:
                     "золотистые", "привет"
                 }
             
-            # Применяем фильтр к встроенному словарю
+            #фильтр ml
             for w in raw_words:
                 if len(w) >= self.min_length:
                     self.words.add(w)
 
     def calculate_score_and_segment(self, text):
         """
-        Жадный алгоритм поиска слов.
-        Возвращает: (score, readable_text)
+        Жадный алгоритм поиска слов
+        ret (score, readable_text)
         """
         if not text:
             return 0.0, ""
@@ -82,10 +81,7 @@ class DictionaryChecker:
             found_word = None
             max_len = min(25, n - i)
             
-            # Ищем слово, начиная с максимально возможной длины до min_length
-            # Если слово короче min_length, его нет в self.words, поэтому цикл можно
-            # прервать раньше, но для надежности оставляем range до 1, 
-            # так как проверка 'in self.words' сама все отфильтрует.
+            #ищем свлов с длины ml
             for length in range(max_len, 1, -1):
                 sub = clean_text[i : i + length]
                 if sub in self.words:

@@ -9,7 +9,7 @@ class Config:
         self.defaults = {
             "ru": "russian_words.txt",
             "en": "english_words.txt",
-            "min_length": 5  # Значение по умолчанию
+            "min_length": 5
         }
 
 atss_conf = Config()
@@ -17,17 +17,15 @@ atss_conf = Config()
 class ATSS:
     def __init__(self, input_file=None, text=None, wordlist=None, lang="ru", threshold=0.3, min_length=None):
         self.lang = lang
-        
-        # Определяем минимальную длину (приоритет: аргумент -> конфиг -> хардкод 5)
         self.min_length = min_length if min_length is not None else atss_conf.defaults.get("min_length", 5)
 
-        # Выбор словаря
+        #словарь
         if wordlist:
             wl_path = wordlist
         else:
             wl_path = atss_conf.defaults.get(lang, "russian_words.txt")
         
-        # Передаем min_length в чекер
+        #передача файла в чекер
         self.checker = DictionaryChecker(dictionary_path=wl_path, lang=self.lang, min_length=self.min_length)
         self.analyzer = StegoAnalyzer()
         self.threshold = threshold

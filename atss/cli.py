@@ -3,7 +3,6 @@ import argparse
 import os
 import sys
 import json
-# Assuming .core exists as per your snippet
 from .core import ATSS, atss_conf 
 
 def run_refactor(input_path, output_path):
@@ -15,8 +14,6 @@ def run_refactor(input_path, output_path):
         print(f"[ATSS] Ошибка: Файл '{input_path}' не найден.", file=sys.stderr)
         return
 
-    # Symbols to strip from the left side. 
-    # Includes: . : - , ? ! — (em-dash) ; (semicolon) and spaces/tabs
     chars_to_strip = ".:-,?!—; \t"
 
     try:
@@ -95,19 +92,19 @@ def main():
     # --- Mutually Exclusive Group (Main Modes) ---
     group = parser.add_mutually_exclusive_group(required=True)
     
-    # Mode 1: Analyze Single File
+    #файл
     group.add_argument("-in", "--input", dest="input_file",
                         help="Путь к одному входному файлу (.txt) для анализа")
     
-    # Mode 2: Analyze Directory
+    #директория
     group.add_argument("-d", "--directory", dest="directory",
                         help="Путь к директории с файлами для пакетного анализа")
     
-    # Mode 3: Refactor File (NEW)
+    #regactor
     group.add_argument("--refactor", dest="refactor_file",
                         help="Путь к файлу для очистки пунктуации в начале строк")
 
-    # --- Common / Optional Arguments ---
+    #options
     parser.add_argument("-o", "--output", dest="output_file", default=None,
                         help="Путь к выходному файлу (обязателен для --refactor)")
 
@@ -124,16 +121,16 @@ def main():
     
     args = parser.parse_args()
 
-    # --- LOGIC BRANCH: REFACTORING ---
+    #refacroring
     if args.refactor_file:
         if not args.output_file:
             print("[ATSS] Ошибка: Для режима --refactor необходимо указать выходной файл через флаг -o", file=sys.stderr)
             sys.exit(1)
         
         run_refactor(args.refactor_file, args.output_file)
-        sys.exit(0) # Exit after refactoring
+        sys.exit(0)
 
-    # --- LOGIC BRANCH: ANALYSIS ---
+    #analysis
     files_to_process = []
     if args.input_file:
         files_to_process.append(args.input_file)

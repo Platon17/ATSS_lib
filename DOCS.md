@@ -7,13 +7,13 @@ pip install .
 ``` python
 from atss import ATSS, atss_conf
 
-# Глобальная настройка (опционально)
-atss_conf.wl = "my_words.txt"
+# Global
+atss_conf.defaults["ru"] = "ruwords.txt" #<- словарь для русского языка
+atss_conf.defaults["en"] = "enwords.txt" #<- словарь для русского языка
+atss_conf.defaults["min_length"] = 1
 
-# Создаем анализатор (вместо 'in' используем 'input_file')
-a = ATSS(input_file="letter.txt")
+a = ATSS(input_file="letter.txt", wordlist="ruwords.txt", lang="ru", min_length=1)
 
-# Смотрим результат
 print(a.ex_words)
 ```
 
@@ -21,5 +21,18 @@ print(a.ex_words)
 ``` bash
 atss -in "letter.txt" -wl "russian_words.txt"
 ```
+Режимы работы
+
+-in <file>	Анализ одного текстового файла (.txt).
+-d <dir>	Пакетный анализ всех .txt файлов в указанной директории.
+--refactor <file>	Режим очистки файла (удаляет мусорные символы в начале строк). Требует флаг -o.
+
+Настройки
+-wl <path>	Путь к файлу словаря (список слов, разделенных переносом строки). По умолчанию None
+-ml <int>	Min Length. Минимальная длина слова для валидации. По умолчанию 5
+--lang <str>	Язык анализа: ru или en. По умолчанию ru
+-o <file>	Путь к выходному файлу (обязательно для --refactor).
+--json	Вывод результата в формате JSON вместо текстового отчета.
+
 
 Russian 1.5M wordlist -> https://github.com/danakt/russian-words
