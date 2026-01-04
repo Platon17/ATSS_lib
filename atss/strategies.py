@@ -70,7 +70,11 @@ class StegoAnalyzer:
         return "".join(res)
 
     def get_first_letters(self, lines):
-        return "".join([line[0] for line in lines if len(line) > 0])
+        res = []
+        for line in lines:
+            clean = re.sub(r'[^а-яА-Яa-zA-Z]', '', line)
+            if clean: res.append(clean[0])
+        return "".join(res)
 
     def get_last_letters(self, lines):
         res = []

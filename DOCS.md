@@ -1,6 +1,6 @@
 ## Setup
 ``` bash
-pip install .
+pip install atss
 ```
 
 ## Use (python script)
@@ -22,17 +22,18 @@ print(a.ex_words)
 atss -in "letter.txt" -wl "russian_words.txt"
 ```
 Режимы работы
-
+```
 -in <file>	Анализ одного текстового файла (.txt).
 -d <dir>	Пакетный анализ всех .txt файлов в указанной директории.
---refactor <file>	Режим очистки файла (удаляет мусорные символы в начале строк). Требует флаг -o.
+```
 
 Настройки
+```
 -wl <path>	Путь к файлу словаря (список слов, разделенных переносом строки). По умолчанию None
 -ml <int>	Min Length. Минимальная длина слова для валидации. По умолчанию 5
 --lang <str>	Язык анализа: ru или en. По умолчанию ru
 -o <file>	Путь к выходному файлу (обязательно для --refactor).
 --json	Вывод результата в формате JSON вместо текстового отчета.
-
+```
 
 Russian 1.5M wordlist -> https://github.com/danakt/russian-words

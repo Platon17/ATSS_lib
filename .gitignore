@@ -4,3 +4,4 @@ atss.egg-info/
 enwords.txt
 build/lib/atss/cli.py
 __pycache__/
+dist/

@@ -21,7 +21,7 @@ from atss import *
 atss_conf.defaults["ru"] = "ruwords.txt"
 atss_conf.defaults["min_length"] = 1
 
-a = ATSS(input_file="tests/data/ru-pikalka-r.txt")
+a = ATSS(input_file="tests/data/ru-pikalka.txt")
 words = a.ex_words['Первые буквы строк']['text'].split()
 
 for w in words:

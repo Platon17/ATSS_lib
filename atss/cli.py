@@ -5,52 +5,6 @@ import sys
 import json
 from .core import ATSS, atss_conf 
 
-def run_refactor(input_path, output_path):
-    """
-    Reads the input file, removes specific punctuation/symbols from the start 
-    of each line, and writes to the output file.
-    """
-    if not os.path.exists(input_path):
-        print(f"[ATSS] Ошибка: Файл '{input_path}' не найден.", file=sys.stderr)
-        return
-
-    chars_to_strip = ".:-,?!—; \t"
-
-    try:
-        with open(input_path, 'r', encoding='utf-8') as f_in:
-            lines = f_in.readlines()
-
-        cleaned_lines = []
-        count = 0
-        for line in lines:
-            # lstrip removes any combination of the characters in 'chars_to_strip'
-            # from the beginning of the string until it hits a character not in the set.
-            original_content = line.rstrip('\n')
-            if not original_content:
-                cleaned_lines.append(line) # Keep empty lines as is
-                continue
-                
-            new_content = original_content.lstrip(chars_to_strip)
-            
-            # Re-attach the newline character if it existed
-            if line.endswith('\n'):
-                cleaned_lines.append(new_content + '\n')
-            else:
-                cleaned_lines.append(new_content)
-            
-            if len(new_content) != len(original_content):
-                count += 1
-
-        with open(output_path, 'w', encoding='utf-8') as f_out:
-            f_out.writelines(cleaned_lines)
-            
-        print(f"[ATSS] Refactor complete.")
-        print(f"       Processed lines: {len(lines)}")
-        print(f"       Modified lines:  {count}")
-        print(f"       Saved to:        {output_path}")
-
-    except Exception as e:
-        print(f"[ATSS] Ошибка при рефакторинге '{input_path}': {e}", file=sys.stderr)
 
 def process_file(filepath, args):
     if not os.path.exists(filepath):
@@ -99,15 +53,8 @@ def main():
     #директория
     group.add_argument("-d", "--directory", dest="directory",
                         help="Путь к директории с файлами для пакетного анализа")
-    
-    #regactor
-    group.add_argument("--refactor", dest="refactor_file",
-                        help="Путь к файлу для очистки пунктуации в начале строк")
 
     #options
-    parser.add_argument("-o", "--output", dest="output_file", default=None,
-                        help="Путь к выходному файлу (обязателен для --refactor)")
-
     parser.add_argument("-wl", "--wordlist", dest="wordlist", default=None,
                         help="Путь к файлу словаря")
     parser.add_argument("--lang", dest="lang", default="ru", choices=["ru", "en"],
@@ -120,15 +67,6 @@ def main():
                         help="Вывести результат анализа в формате JSON")
     
     args = parser.parse_args()
-
-    #refacroring
-    if args.refactor_file:
-        if not args.output_file:
-            print("[ATSS] Ошибка: Для режима --refactor необходимо указать выходной файл через флаг -o", file=sys.stderr)
-            sys.exit(1)
-        
-        run_refactor(args.refactor_file, args.output_file)
-        sys.exit(0)
 
     #analysis
     files_to_process = []
