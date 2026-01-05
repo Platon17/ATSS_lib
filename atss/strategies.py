@@ -18,6 +18,9 @@ class StegoAnalyzer:
             ("Третьи буквы строк", self.get_third_letters_clean),
             ("Первые буквы ВТОРОГО слова", self.get_first_letters_second_word),
             ("Края строк (1-я + Последняя)", self.get_first_and_last_combined),
+            #diagoinal
+            ("Диагональ (Слева -> Направо)", self.get_diagonal_ltr),
+            ("Диагональ (Справа -> Налево)", self.get_diagonal_rtl),
         ]
 
     def prepare_lines(self, text):
@@ -47,6 +50,23 @@ class StegoAnalyzer:
         return results
 
     # Методы
+
+    def get_diagonal_ltr(self, lines):
+        res = []
+        for i, line in enumerate(lines):
+            clean = re.sub(r'[^а-яА-Яa-zA-Z]', '', line)
+            if len(clean) > i:
+                res.append(clean[i])
+        return "".join(res)
+
+    def get_diagonal_rtl(self, lines):
+        res = []
+        for i, line in enumerate(lines):
+            clean = re.sub(r'[^а-яА-Яa-zA-Z]', '', line)
+            idx = -(i + 1)
+            if len(clean) >= abs(idx):
+                res.append(clean[idx])
+        return "".join(res)
 
     def get_first_letters_head(self, lines):
         limit = 50
