@@ -10,8 +10,8 @@ class StegoAnalyzer:
             ("Первые буквы предложений", self.get_first_letters_sentences_strict),
             
             #Начало и конец
-            ("Первые буквы (Начало - 50 строк)", self.get_first_letters_head),
-            ("Первые буквы (Конец - 50 строк)", self.get_first_letters_tail),
+            #("Первые буквы (Начало - 50 строк)", self.get_first_letters_head),
+            #("Первые буквы (Конец - 50 строк)", self.get_first_letters_tail),
             
             # мезостих
             ("Вторые буквы строк", self.get_second_letters_clean),

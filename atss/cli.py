@@ -16,7 +16,8 @@ def process_file(filepath, args):
             input_file=filepath, 
             wordlist=args.wordlist, 
             lang=args.lang,
-            min_length=args.min_length
+            min_length=args.min_length,
+            threshold=args.threshold,
         )
         return app
     except Exception as e:
@@ -65,7 +66,9 @@ def main():
 
     parser.add_argument("--json", dest="json_output", action="store_true",
                         help="Вывести результат анализа в формате JSON")
-    
+    parser.add_argument("-s", "--threshold", dest="threshold", type=float, default=0.3,
+                        help="Пороговое значение для определения скрытых сообщений (default: 0.3)")
+
     args = parser.parse_args()
 
     #analysis

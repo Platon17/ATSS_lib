@@ -23,7 +23,7 @@ class ATSS:
         if wordlist:
             wl_path = wordlist
         else:
-            wl_path = atss_conf.defaults.get(lang, "russian_words.txt")
+            wl_path = atss_conf.defaults[lang]
         
         #передача файла в чекер
         self.checker = DictionaryChecker(dictionary_path=wl_path, lang=self.lang, min_length=self.min_length)
