@@ -53,7 +53,7 @@ class ATSS:
         
         transforms = [
             ("Plain", lambda s: s),
-            ("ROT13", lambda s: codecs.encode(s, 'rot_13'))
+            ("ROT13", lambda s: codecs.encode(s, 'rot_13')),
         ]
 
         for method, raw_string in candidates.items():
